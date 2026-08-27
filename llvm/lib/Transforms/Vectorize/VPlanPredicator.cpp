@@ -351,9 +351,11 @@ VPPredicator::computeBlendTerms(VPPhi *Phi) const {
   sort(Terms, [this](const BlendTermTy &L, const BlendTermTy &R) {
     return BlockIndex.lookup(L.second) < BlockIndex.lookup(R.second);
   });
-  for (auto [L, R] : zip(Terms, drop_begin(Terms)))
-    assert((L.second != R.second || L.first == R.first) &&
-           "Different values provided by the same block");
+  assert(all_of(zip(Terms, drop_begin(Terms)), [](const auto &Pair) {
+           const auto &[L, R] = Pair;
+           return L.second != R.second || L.first == R.first;
+         }) &&
+         "Different values provided by the same block");
 
   SmallVector<BlendTermTy> Combined;
   for (unsigned Begin = 0, End = Terms.size(); Begin != End;) {
